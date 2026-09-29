@@ -1,54 +1,49 @@
-# Brief à transmettre au service Communication
+# Brief de commande — prochain jeu COM Arcade
 
-Copiez-collez le texte ci-dessous et complétez les champs entre crochets.
+> À envoyer tel quel au service Communication, au studio ou au prestataire.
 
----
+Nous préparons le prochain jeu de **COM Arcade**, le mini-jeu hebdomadaire de notre intranet. Vous ne développez pas une application complète : vous fournissez une mécanique de jeu qui sera intégrée à notre **COM Arcade GameKit**. Notre plateforme gère l'utilisateur, le chrono officiel, la persistance des scores et le classement.
 
-Nous préparons le prochain mini-jeu de **COM Arcade**, service satellite autonome de notre intranet. Le jeu précédent doit être remplacé sans modifier l’application, le stockage des scores ni le classement.
+## Informations éditoriales à compléter
 
-Merci de nous fournir un jeu web rétro **prêt à intégrer**, conforme à ce cahier des charges :
+| Élément | Valeur |
+| --- | --- |
+| Nom du jeu | [nom court et mémorisable] |
+| Thème / campagne COM | [thème] |
+| Diffusion | [date de début] → [date de fin] |
+| Objectif joueur | [une phrase] |
+| Règle de score | [une phrase] |
+| Accroche | [maximum 120 caractères] |
 
-## Concept éditorial
+## Votre mission créative
 
-- Nom du jeu : **[nom]**
-- Thème / campagne COM associée : **[thème]**
-- Période de diffusion : **[date de début] → [date de fin]**
-- Accroche affichée à l’écran (max. 120 caractères) : **[accroche]**
-- Public : collaborateurs internes ; ton inclusif, léger et non infantilisant.
+Concevez un rétro-jeu immédiat à comprendre et plaisant à rejouer, pour des collaborateurs internes. La durée d'une partie doit être de **20 à 120 secondes**. Le jeu doit être accessible sans connaissance métier, jouable au clavier et sans son, avec des instructions très courtes et une règle de score transparente.
 
-## Livrable attendu
+Nous recherchons une boucle de jeu claire, une direction artistique rétro lisible, une difficulté progressive mais équitable et un résultat valorisant. Évitez les mécanismes frustrants, le pay-to-win et les contenus violents, clivants, politiques ou anxiogènes.
 
-Fournissez un dossier autonome avec :
+## Livrable technique obligatoire
 
-1. `index.html`, `game.js`, `styles.css` et les éventuels assets dans `assets/` ; aucun build, CDN ou dépendance externe.
-2. Un jeu jouable au clavier, à la souris ou au tactile, dans un conteneur responsive de 16:9 environ.
-3. Une fonction JavaScript globale exactement nommée `startGame()`.
-4. À la fin d’une partie, l’appel suivant, une seule fois :
+Livrez un fichier ZIP de moins de 5 Mo contenant uniquement :
 
-```js
-window.parent.postMessage({ type: "com-arcade:game-over", score: 1234 }, "*");
+```text
+game/
+  game.js
+  assets/
+  README.md
 ```
 
-`score` doit être un entier positif. Le jeu ne doit pas envoyer de nom, d’e-mail, de cookie, ni aucune donnée utilisateur : l’intranet gère l’identité et l’enregistrement du score.
+Le fichier `game.js` est un module JavaScript ES natif sans framework, dépendance, CDN, serveur, `package.json`, `index.html` ni iframe. Il doit suivre strictement le contrat [GAMEKIT.md](./GAMEKIT.md) joint à ce brief : objet exporté `game`, méthode `mount(root, kit)` et méthodes `start`, `pause`, `destroy`.
 
-5. Une durée de partie comprise entre 20 secondes et 2 minutes. Le score doit refléter clairement la performance, avec une règle simple à expliquer en une phrase.
-6. Un écran de démarrage, les instructions, un écran de fin, et un bouton « Rejouer ».
-7. Une courte notice `README.md` indiquant : règles, contrôles, formule du score, crédits/licences des visuels et sons.
+Le score est transmis exclusivement via `kit.score.add()` ou `kit.score.set()`, puis la fin de jeu via `kit.run.finish()`. Ne créez pas de formulaire, de compte, de stockage navigateur, d'appel réseau ni de système de classement : ils sont fournis par COM Arcade.
 
-## Contraintes essentielles
+## Livrables complémentaires
 
-- Compatible Chrome et Edge récents, sans connexion Internet après le chargement.
-- JavaScript sans framework ; pas de React, iframe tierce, publicité, tracking ou collecte de données.
-- Pas de contenu discriminant, violent, anxiogène, politique ou nécessitant une connaissance métier spécifique.
-- Visuels et sons créés ou licenciés pour cet usage interne ; fournir les crédits.
-- Accessibilité minimale : contrôles alternatifs, instructions textuelles, contraste lisible, le jeu reste jouable sans son.
-- Poids cible total : moins de 5 Mo, assets optimisés.
-- Le jeu doit pouvoir être arrêté/nettoyé proprement : pas de timer, listener ou audio persistant après une fin de partie.
+- une capture ou maquette de l'écran de jeu ;
+- le texte final des règles et contrôles ;
+- la formule exacte du score ;
+- une liste complète des assets, auteurs et licences ;
+- le README technique complété selon le GameKit.
 
-## Critères de validation
+## Définition de « prêt à intégrer »
 
-Avant livraison, vérifiez : le jeu démarre sans erreur console, une partie peut être jouée jusqu’au bout, l’événement `com-arcade:game-over` est envoyé avec un score entier, et « Rejouer » démarre une nouvelle partie sans recharger la page.
-
----
-
-À fournir également avec la réponse : une maquette ou capture de l’écran de jeu, le nom du jeu, l’accroche, la règle de score et les crédits des assets.
+Le jeu est accepté après démonstration d'une partie complète, d'une fin de partie, d'un redémarrage et d'une destruction propre, sans erreur console ni requête réseau. Tout livrable qui ne respecte pas le GameKit ou introduit une dépendance externe sera retourné pour correction.

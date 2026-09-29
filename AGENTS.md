@@ -6,6 +6,7 @@ COM Arcade est un service satellite autonome de l'intranet, porté par le servic
 ## Invariants à ne pas modifier
 - Stack : Next.js (App Router), SQLite, Docker.
 - Le service reste indépendant du code de l'intranet. Son intégration utilisateur se fait uniquement par un adaptateur/gateway HTTP.
+- Les jeux hebdomadaires respectent obligatoirement le contrat local `GAMEKIT.md`; ils ne contrôlent jamais l'identité, le chrono officiel, le stockage ni le classement.
 - Toutes les parties sont historisées : jeu, participant, score et date de jeu.
 - Le classement d'un jeu repose sur le meilleur score de chaque participant.
 - La base SQLite est persistée hors du conteneur, dans le volume `/data`.
