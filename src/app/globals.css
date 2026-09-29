@@ -1,0 +1,6 @@
+@import "tailwindcss";
+:root { --ink: #14213d; --orange: #ff6b35; --paper: #fff8e7; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+button, input { font: inherit; }
+.arcade-bg { background-image: radial-gradient(#f6d58f 1px, transparent 1px); background-size: 18px 18px; }

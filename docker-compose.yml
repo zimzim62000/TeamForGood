@@ -1,0 +1,9 @@
+services:
+  arcade:
+    build: .
+    ports: ["3000:3000"]
+    environment: { DATA_DIR: /data }
+    volumes: ["arcade-data:/data"]
+    restart: unless-stopped
+volumes:
+  arcade-data:
