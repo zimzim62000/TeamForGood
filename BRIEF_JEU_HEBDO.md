@@ -1,29 +1,46 @@
-# Brief de commande — prochain jeu COM Arcade
+# Brief de commande — jeu hebdomadaire COM Arcade
 
-> À envoyer tel quel au service Communication, au studio ou au prestataire.
+> Document prêt à transmettre au service Communication, à un studio ou à un prestataire. Les champs entre crochets doivent être complétés avant envoi.
 
-Nous préparons le prochain jeu de **COM Arcade**, le mini-jeu hebdomadaire de notre intranet. Vous ne développez pas une application complète : vous fournissez une mécanique de jeu qui sera intégrée à notre **COM Arcade GameKit**. Notre plateforme gère l'utilisateur, le chrono officiel, la persistance des scores et le classement.
+## 1. Contexte
 
-## Informations éditoriales à compléter
+COM Arcade est le mini-jeu hebdomadaire intégré à l’intranet Primetime. Vous ne développez pas un site ni une application autonome : vous livrez uniquement une mécanique de jeu compatible avec notre contrat `GAMEKIT.md`.
 
-| Élément | Valeur |
+COM Arcade prend déjà en charge l’identité, le tenant, la session, le chrono officiel, l’enregistrement des parties, le meilleur score par participant et le classement. Le jeu ne doit recréer aucune de ces fonctions.
+
+## 2. Fiche éditoriale
+
+| Élément | Valeur à compléter |
 | --- | --- |
-| Nom du jeu | [nom court et mémorisable] |
-| Thème / campagne COM | [thème] |
-| Diffusion | [date de début] → [date de fin] |
-| Objectif joueur | [une phrase] |
-| Règle de score | [une phrase] |
-| Accroche | [maximum 120 caractères] |
+| Nom court du jeu | [nom] |
+| Identifiant unique | [slug jamais utilisé auparavant] |
+| Thème / campagne | [thème] |
+| Diffusion | [date et heure de début] → [date et heure de fin] |
+| Durée d’une partie | [20 à 120 secondes] |
+| Objectif | [une phrase] |
+| Contrôles | [touches et éventuels contrôles tactiles] |
+| Formule exacte du score | [formule, bonus et pénalités] |
+| Score maximum théorique | [entier] |
+| Accroche | [120 caractères maximum] |
 
-## Votre mission créative
+Chaque nouvelle semaine reçoit un identifiant de jeu inédit. Un jeu ou un identifiant déjà diffusé ne doit jamais être réutilisé : les éditions passées et leurs scores restent historisés.
 
-Concevez un rétro-jeu immédiat à comprendre et plaisant à rejouer, pour des collaborateurs internes. La durée d'une partie doit être de **20 à 120 secondes**. Le jeu doit être accessible sans connaissance métier, jouable au clavier et sans son, avec des instructions très courtes et une règle de score transparente.
+## 3. Intention créative
 
-Nous recherchons une boucle de jeu claire, une direction artistique rétro lisible, une difficulté progressive mais équitable et un résultat valorisant. Évitez les mécanismes frustrants, le pay-to-win et les contenus violents, clivants, politiques ou anxiogènes.
+Concevez un rétro-jeu :
 
-## Livrable technique obligatoire
+- compris en moins de dix secondes, sans connaissance métier ;
+- agréable à rejouer pendant une partie de 20 à 120 secondes ;
+- jouable intégralement au clavier et sans son ;
+- utilisable dans un cadre 16:9 responsive à partir de 320 px de large ;
+- doté d’une difficulté progressive, lisible et équitable ;
+- valorisant, non violent, non anxiogène, non politique et non clivant.
 
-Livrez un fichier ZIP de moins de 5 Mo contenant uniquement :
+Les contrôles, l’objectif et la règle de score doivent rester visibles ou accessibles pendant la partie. Le hasard peut varier une partie, mais ne doit pas rendre le classement arbitraire.
+
+## 4. Livrable obligatoire
+
+Livrez un ZIP dont le contenu décompressé pèse moins de 5 Mo et contient un seul dossier :
 
 ```text
 game/
@@ -32,18 +49,71 @@ game/
   README.md
 ```
 
-Le fichier `game.js` est un module JavaScript ES natif sans framework, dépendance, CDN, serveur, `package.json`, `index.html` ni iframe. Il doit suivre strictement le contrat [GAMEKIT.md](./GAMEKIT.md) joint à ce brief : objet exporté `game`, méthode `mount(root, kit)` et méthodes `start`, `pause`, `destroy`.
+Contraintes :
 
-Le score est transmis exclusivement via `kit.score.add()` ou `kit.score.set()`, puis la fin de jeu via `kit.run.finish()`. Ne créez pas de formulaire, de compte, de stockage navigateur, d'appel réseau ni de système de classement : ils sont fournis par COM Arcade.
+- `game.js` est un module JavaScript ES natif exportant `game` ;
+- aucun framework, package npm, CDN, serveur, `index.html`, iframe ou code compilé opaque ;
+- aucun appel réseau (`fetch`, WebSocket, beacon), analytics, publicité ou tracking ;
+- aucun cookie, `localStorage`, `sessionStorage` ou autre stockage navigateur ;
+- aucun formulaire, compte, nom, e-mail ou identifiant utilisateur demandé par le jeu ;
+- aucun accès ou changement de `document.body`, du titre, de l’URL ou des styles de l’hôte ;
+- tous les assets sont locaux, optimisés, crédités et sous licence compatible ;
+- compatibilité avec les versions récentes de Chrome et Edge.
 
-## Livrables complémentaires
+Le contrat technique complet joint à la commande est `GAMEKIT.md`. En cas de différence, ce contrat prévaut.
 
-- une capture ou maquette de l'écran de jeu ;
-- le texte final des règles et contrôles ;
-- la formule exacte du score ;
-- une liste complète des assets, auteurs et licences ;
-- le README technique complété selon le GameKit.
+## 5. Cycle de vie et score
 
-## Définition de « prêt à intégrer »
+Le jeu doit fournir `mount`, puis un contrôleur avec `start`, `pause`, `resume` et `destroy`.
 
-Le jeu est accepté après démonstration d'une partie complète, d'une fin de partie, d'un redémarrage et d'une destruction propre, sans erreur console ni requête réseau. Tout livrable qui ne respecte pas le GameKit ou introduit une dépendance externe sera retourné pour correction.
+- `start()` remet toujours la mécanique dans son état initial et appelle `kit.run.start()`.
+- `pause()` stoppe immédiatement les animations et interactions du jeu.
+- `resume()` reprend sans remettre la partie à zéro.
+- `destroy()` retire tous les éléments créés par le jeu.
+- Le chrono officiel appartient à COM Arcade et termine automatiquement la partie à la durée annoncée.
+- Une fin naturelle anticipée peut appeler `kit.run.finish(reason)`.
+- Le score passe exclusivement par `kit.score.add()` ou `kit.score.set()`.
+- Aucun score ne peut être ajouté après la fin d’une partie.
+
+Le jeu doit supporter au minimum une partie complète, un replay sur la même instance, une mise en pause/reprise et une destruction.
+
+## 6. Accessibilité et responsive
+
+- toutes les actions sont disponibles au clavier ;
+- le focus clavier est visible et placé dans le jeu au démarrage ;
+- aucune information n’est communiquée uniquement par la couleur ou le son ;
+- les consignes et retours importants sont textuels via `kit.ui.setStatus()` ;
+- les animations respectent `prefers-reduced-motion` ;
+- les textes et éléments interactifs conservent un contraste lisible ;
+- aucune touche ne piège définitivement le focus ;
+- le jeu reste utilisable de 320 px de large jusqu’au plein écran.
+
+## 7. README et livrables complémentaires
+
+Le README du jeu doit indiquer :
+
+- objectif, règles et contrôles ;
+- durée et conditions de fin ;
+- formule détaillée du score et maximum théorique ;
+- liste exhaustive des assets, auteurs, sources et licences ;
+- navigateurs testés ;
+- limites connues.
+
+Joignez également une capture ou une maquette de l’écran de jeu et le texte éditorial final destiné aux joueurs.
+
+## 8. Recette d’acceptation
+
+La livraison est acceptée si :
+
+1. le ZIP respecte exactement la structure et la limite de poids ;
+2. le module s’importe sans erreur et son manifeste correspond au jeu commandé ;
+3. deux parties consécutives donnent un état propre et indépendant ;
+4. le chrono, la pause, la reprise, la fin naturelle et la fin anticipée fonctionnent ;
+5. le score correspond à la formule annoncée et reste dans les limites convenues ;
+6. `destroy()` ne laisse aucun DOM, timer, listener ou audio actif ;
+7. aucune requête réseau ni stockage navigateur n’est produit ;
+8. le clavier, le responsive et la réduction des animations sont vérifiés ;
+9. la console reste sans erreur pendant toute la recette ;
+10. les assets et leurs licences sont complets.
+
+Une livraison qui échoue à l’un de ces critères est retournée pour correction.

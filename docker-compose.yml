@@ -1,8 +1,17 @@
 services:
   arcade:
-    build: .
+    build:
+      context: .
+      args:
+        FRAME_ANCESTORS: ${FRAME_ANCESTORS:-}
     ports: ["3000:3000"]
-    environment: { DATA_DIR: /data }
+    environment:
+      DATA_DIR: /data
+      ALLOW_DEV_IDENTITY: ${ALLOW_DEV_IDENTITY:-true}
+      SESSION_SECRET_HEX: ${SESSION_SECRET_HEX:-}
+      RETRO_TENANTS_JSON: ${RETRO_TENANTS_JSON:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
     volumes: ["arcade-data:/data"]
     restart: unless-stopped
 volumes:

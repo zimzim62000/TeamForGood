@@ -1,98 +1,116 @@
-# COM Arcade GameKit — contrat d'intégration
+# COM Arcade GameKit — contrat d’intégration v1
 
-## Pourquoi ce kit existe
+## Responsabilités
 
-Le jeu est remplaçable chaque semaine ; le service COM Arcade, l'identité intranet, les scores et les classements ne le sont pas. Un fournisseur de jeu ne livre donc jamais une application autonome, une base de données ou une authentification. Il livre une mécanique de jeu branchée sur notre GameKit.
+COM Arcade fournit le conteneur responsive, l’identité et le tenant, la session de partie, le chrono officiel, le score, sa persistance et le classement. Le module hebdomadaire fournit uniquement la mécanique visuelle et interactive.
 
-## Ce que COM Arcade fournit
-
-- l'écran, le responsive et le design système ;
-- l'identité de la personne connectée ;
-- le chrono officiel de la partie ;
-- la session de jeu, l'enregistrement du score, le classement et l'historique ;
-- le cycle de vie : démarrer, mettre en pause, terminer, rejouer, détruire ;
-- un conteneur DOM vide `root` et les assets validés.
-
-## Ce que le fournisseur fournit
-
-Un dossier `game/` contenant exactement :
-
-```text
-game/
-  game.js        # module ES, sans framework ni dépendance
-  assets/        # images, sprites, sons, polices sous licence
-  README.md      # règle, contrôles, score, crédits
-```
-
-Il ne fournit ni `index.html`, ni serveur, ni `package.json`, ni CDN, ni iframe.
+Le jeu reçoit un élément DOM vide `root`. Tout ce qu’il crée doit rester dans cet élément.
 
 ## Module attendu
 
-`game.js` exporte un objet `game` qui respecte ce contrat :
-
 ```js
 export const game = {
-  manifest: { id: "pixel-panic", title: "Pixel Panic", version: "1.0.0", durationSeconds: 45, controls: "Flèches ou ZQSD", scoring: "10 points par pixel collecté" },
+  manifest: {
+    id: "pixel-panic-2026-w40",
+    title: "Pixel Panic",
+    version: "1.0.0",
+    durationSeconds: 45,
+    controls: "Flèches ou ZQSD",
+    scoring: "+100 par pixel collecté"
+  },
   mount(root, kit) {
-    // Construire tout le jeu exclusivement dans root.
-    return { start() {}, pause() {}, destroy() {} };
+    return {
+      start() {},
+      pause() {},
+      resume() {},
+      destroy() {}
+    };
   }
 };
 ```
 
-L'hôte appelle `mount`, puis `start`. Il peut appeler `pause` lors d'une perte de visibilité et appellera toujours `destroy` en fin de partie ou au changement de jeu.
+Le champ `id` est immuable et inédit. `durationSeconds` est un entier compris entre 20 et 120 et doit correspondre à la durée configurée dans COM Arcade.
 
-## API GameKit disponible dans `mount(root, kit)`
+## Cycle de vie
+
+1. L’hôte importe le module une seule fois et appelle `mount(root, kit)`.
+2. Après création de la session serveur, l’hôte appelle `start()` ; le jeu réinitialise son état puis appelle `kit.run.start()`.
+3. En cas de perte de visibilité, l’hôte appelle `pause()`. Le chrono officiel continue afin d’éviter les avantages liés au changement d’onglet.
+4. Au retour, l’hôte appelle `resume()` si la partie n’est pas terminée.
+5. L’hôte termine automatiquement la partie lorsque la durée officielle expire. Le jeu peut terminer plus tôt avec `kit.run.finish(reason)`.
+6. Pour rejouer, l’hôte rappelle `start()` sur la même instance.
+7. Au changement de jeu ou démontage de la page, l’hôte appelle `destroy()` puis nettoie aussi les ressources enregistrées via le kit.
+
+Après `pause()`, aucune interaction ne doit modifier le jeu ou le score. Après `destroy()`, aucun appel au kit n’est autorisé.
+
+## API disponible
 
 ```ts
 kit.run.start(): void
 kit.run.finish(reason?: string): void
 kit.run.isRunning(): boolean
-kit.score.add(points: number): void      // entier positif, maximum 10 000 par appel
-kit.score.set(value: number): void       // entier >= 0 ; seulement si la règle le justifie
+
+kit.score.add(points: number): void
+kit.score.set(value: number): void
 kit.score.current(): number
-kit.ui.setStatus(text: string): void     // message accessible, max. 160 caractères
-kit.timers.timeout(callback, ms): number // timers nettoyés automatiquement
-kit.timers.interval(callback, ms): number
-kit.timers.clear(id): void
-kit.events.on(target, event, handler): void // listener nettoyé automatiquement
+
+kit.ui.setStatus(text: string): void
+
+kit.timers.timeout(callback: () => void, ms: number): number
+kit.timers.interval(callback: () => void, ms: number): number
+kit.timers.clear(id: number): void
+
+kit.events.on(target: EventTarget, event: string, handler: EventListener): void
 kit.assets.url(relativePath: string): string
 ```
 
-Le GameKit refuse un score hors bornes, un score après `finish`, et les appels après `destroy`. `finish` déclenche le stockage du score côté serveur : le jeu ne fait jamais de `fetch` pour envoyer un score.
+Règles d’utilisation :
 
-## Règles non négociables
+- `score.add` accepte un entier strictement positif, limité à 10 000 par appel ;
+- `score.set` accepte un entier positif ou nul uniquement si la formule du jeu le justifie ;
+- le total est plafonné au maximum défini lors de l’intégration ;
+- les appels de score hors partie ou après la fin sont ignorés ;
+- `setStatus` accepte au maximum 160 caractères et sert aux retours accessibles ;
+- les timers et listeners doivent obligatoirement être créés via le kit ;
+- `assets.url` ne doit viser qu’un fichier livré dans `assets/`.
 
-- JavaScript ES natif, compatible Chrome et Edge récents ; pas de React, Phaser, Unity, CDN, npm ou dépendance téléchargée.
-- Aucun `fetch`, WebSocket, localStorage, cookie, analytics, tracking, publicité, iframe, popup ou authentification.
-- Aucun nom, e-mail ou identifiant utilisateur ne doit être demandé, affiché ou transmis.
-- Le jeu est jouable clavier et sans son ; les consignes et retours de jeu doivent être textuels.
-- Le jeu doit fonctionner dans un espace 16:9 responsive, à partir de 320 px de large.
-- Tous les assets sont livrés, optimisés ; poids total inférieur à 5 Mo ; licences et crédits fournis.
-- Le jeu ne modifie jamais `document.body`, le titre de page ou les styles de l'hôte ; tous les éléments sont dans `root`.
+Le score envoyé par le module reste contrôlé par la plateforme : une session serveur possède un jeu, un tenant, un participant, une heure de départ, une échéance et une seule soumission finale.
 
-## Validation de livraison
+## Interdictions
 
-La livraison est acceptée seulement si :
-
-1. `game.js` s'importe sans erreur et expose le contrat ci-dessus ;
-2. une partie se lance, se termine naturellement et peut être rejouée ;
-3. `destroy()` laisse le DOM, les timers, les listeners et l'audio propres ;
-4. les appels `kit.score.*` produisent le score attendu selon la règle annoncée ;
-5. aucun appel réseau ne se produit pendant une partie ;
-6. le README liste règles, contrôles, formule de score, durée, assets et licences.
+- React, Phaser, Unity, npm, dépendance externe, CDN ou iframe ;
+- `fetch`, XMLHttpRequest, WebSocket, EventSource, beacon ;
+- cookies, stockage local ou cache applicatif ;
+- authentification ou collecte d’identité ;
+- modification du document hôte hors de `root` ;
+- listeners ou timers natifs non enregistrés via le kit ;
+- contenu violent, anxiogène, politique, clivant ou publicitaire.
 
 ## Exemple minimal
 
 ```js
 export const game = {
-  manifest: { id: "catch-star", title: "Catch Star", version: "1.0.0", durationSeconds: 30, controls: "Clic ou Entrée", scoring: "+10 par étoile" },
+  manifest: {
+    id: "catch-star-2026-w40",
+    title: "Catch Star",
+    version: "1.0.0",
+    durationSeconds: 30,
+    controls: "Entrée",
+    scoring: "+10 par étoile"
+  },
   mount(root, kit) {
     const button = document.createElement("button");
     button.textContent = "✦";
     root.append(button);
-    kit.events.on(button, "click", () => { if (kit.run.isRunning()) kit.score.add(10); });
-    return { start() { kit.run.start(); }, pause() {}, destroy() { root.replaceChildren(); } };
+    kit.events.on(button, "click", () => {
+      if (kit.run.isRunning()) kit.score.add(10);
+    });
+    return {
+      start() { kit.run.start(); button.focus(); },
+      pause() { button.disabled = true; },
+      resume() { button.disabled = false; button.focus(); },
+      destroy() { root.replaceChildren(); }
+    };
   }
 };
 ```
