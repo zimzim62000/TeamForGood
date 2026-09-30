@@ -3,7 +3,7 @@
     "slug": "neon-dodger",
     "title": "Neon Dodger — Démonstration",
     "startsAt": "2026-01-01T00:00:00+01:00",
-    "endsAt": "2026-10-05T08:00:00+02:00",
+    "endsAt": "2026-09-30T11:48:40+02:00",
     "moduleUrl": "/games/demo/game.js",
     "durationSeconds": 30,
     "maxScore": 10000
@@ -11,8 +11,8 @@
   {
     "slug": "palette-rush-2026-w41",
     "title": "Palette Rush",
-    "startsAt": "2026-10-05T08:00:00+02:00",
-    "endsAt": "2026-10-12T08:00:00+02:00",
+    "startsAt": "2026-09-30T11:48:40+02:00",
+    "endsAt": "2026-09-30T18:00:00+02:00",
     "moduleUrl": "/games/palette-rush-2026-w41/game.js",
     "durationSeconds": 30,
     "maxScore": 1000
