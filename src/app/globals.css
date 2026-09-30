@@ -13,3 +13,13 @@ button, input { font: inherit; }
   .arcade-layout { display: block; }
   .arcade-game-stage { aspect-ratio: auto; min-height: 180px; height: calc(100vh - 145px); }
 }
+
+.arcade-focus { padding: .5rem; }
+.arcade-focus .arcade-header { margin-bottom: .5rem; padding: 0; border: 0; justify-content: flex-end; }
+.arcade-focus .arcade-header > div:first-child, .arcade-focus .arcade-header-copy, .arcade-focus .arcade-leaderboard { display: none; }
+.arcade-focus .arcade-layout { display: block; }
+.arcade-focus .arcade-game-stage { aspect-ratio: auto; min-height: 180px; height: calc(100vh - 105px); }
+
+.arcade-show-leaderboard .arcade-layout { display: block; }
+.arcade-show-leaderboard .arcade-layout > div:first-child { display: none; }
+.arcade-show-leaderboard .arcade-leaderboard { display: block; max-height: calc(100vh - 150px); overflow-y: auto; }

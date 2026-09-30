@@ -29,6 +29,8 @@ export function Arcade() {
   const [ready, setReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const mainRef = useRef<HTMLElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -200,11 +202,16 @@ export function Arcade() {
   }, []);
 
   async function toggleFullscreen() {
+    if (focusMode) {
+      setFocusMode(false);
+      return;
+    }
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
       else await (mainRef.current ?? document.documentElement).requestFullscreen();
     } catch {
-      setMessage("Le plein écran doit être autorisé par l’intranet.");
+      setFocusMode(true);
+      setMessage("Mode jeu activé.");
     }
   }
 
@@ -230,8 +237,8 @@ export function Arcade() {
   }
 
   return (
-    <main ref={mainRef} className="arcade-bg arcade-page min-h-screen px-4 py-7 sm:px-10 sm:py-10"><div className="mx-auto max-w-6xl">
-      <header className="arcade-header mb-7 flex flex-col justify-between gap-3 border-b-4 border-[#14213d] pb-5 sm:flex-row sm:items-end"><div><p className="arcade-kicker mb-1 text-sm font-bold tracking-[.22em] text-[#ff6b35]">SERVICE COM · INTRANET</p><h1 className="arcade-title text-4xl font-black tracking-tight sm:text-6xl">COM ARCADE</h1></div><div className="flex items-center gap-3"><p className="arcade-header-copy max-w-sm text-sm font-bold">Un jeu rétro chaque semaine. Une partie courte. Votre meilleur score au classement.</p><button type="button" onClick={() => void toggleFullscreen()} className="shrink-0 border-2 border-[#14213d] bg-white px-3 py-2 text-sm font-black" aria-label={isFullscreen ? "Quitter le plein écran" : "Passer en plein écran"}>{isFullscreen ? "RÉDUIRE" : "PLEIN ÉCRAN"}</button></div></header>
+    <main ref={mainRef} className={`arcade-bg arcade-page min-h-screen px-4 py-7 sm:px-10 sm:py-10 ${focusMode ? "arcade-focus" : ""} ${showLeaderboard ? "arcade-show-leaderboard" : ""}`}><div className="mx-auto max-w-6xl">
+      <header className="arcade-header mb-7 flex flex-col justify-between gap-3 border-b-4 border-[#14213d] pb-5 sm:flex-row sm:items-end"><div><p className="arcade-kicker mb-1 text-sm font-bold tracking-[.22em] text-[#ff6b35]">SERVICE COM · INTRANET</p><h1 className="arcade-title text-4xl font-black tracking-tight sm:text-6xl">COM ARCADE</h1></div><div className="flex items-center gap-3"><p className="arcade-header-copy max-w-sm text-sm font-bold">Un jeu rétro chaque semaine. Une partie courte. Votre meilleur score au classement.</p><button type="button" onClick={() => { setShowLeaderboard((value) => !value); setFocusMode(false); }} className="shrink-0 border-2 border-[#14213d] bg-white px-3 py-2 text-sm font-black" aria-pressed={showLeaderboard}>{showLeaderboard ? "JEU" : "CLASSEMENT"}</button><button type="button" onClick={() => void toggleFullscreen()} className="shrink-0 border-2 border-[#14213d] bg-white px-3 py-2 text-sm font-black" aria-label={isFullscreen || focusMode ? "Réduire la zone de jeu" : "Agrandir la zone de jeu"}>{isFullscreen || focusMode ? "RÉDUIRE" : "AGRANDIR LE JEU"}</button></div></header>
       <section className="arcade-layout grid gap-7 lg:grid-cols-[1.35fr_.65fr]">
         <div className="border-4 border-[#14213d] bg-[#14213d] p-3 shadow-[8px_8px_0_#ff6b35]">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-white"><strong>{game?.title ?? "JEU EN CHARGEMENT"}</strong><span className="font-mono">{score} PTS · {seconds.toString().padStart(2, "0")} S</span></div>
