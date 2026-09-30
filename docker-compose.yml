@@ -12,6 +12,8 @@ services:
       RETRO_TENANTS_JSON: ${RETRO_TENANTS_JSON:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3000}
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+      # Surcharge locale facultative pour prévisualiser un jeu programmé.
+      GAME_OVERRIDE_SLUG: ${GAME_OVERRIDE_SLUG:-}
     volumes: ["arcade-data:/data"]
     restart: unless-stopped
 volumes:
