@@ -4,3 +4,12 @@
 body { margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 button, input { font: inherit; }
 .arcade-bg { background-image: radial-gradient(#f6d58f 1px, transparent 1px); background-size: 18px 18px; }
+
+@media (max-height: 620px) {
+  .arcade-page { padding: .75rem; }
+  .arcade-header { margin-bottom: .75rem; padding-bottom: .5rem; }
+  .arcade-kicker, .arcade-header-copy, .arcade-leaderboard { display: none; }
+  .arcade-title { font-size: 1.75rem; }
+  .arcade-layout { display: block; }
+  .arcade-game-stage { aspect-ratio: auto; min-height: 180px; height: calc(100vh - 145px); }
+}

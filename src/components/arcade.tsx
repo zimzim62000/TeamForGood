@@ -28,7 +28,9 @@ export function Arcade() {
   const [playerName, setPlayerName] = useState("");
   const [ready, setReady] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const mainRef = useRef<HTMLElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<GameController | null>(null);
   const gameRef = useRef<GameInfo | null>(null);
@@ -179,6 +181,33 @@ export function Arcade() {
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    if (window.parent === window) return;
+    const notifyParent = () => {
+      window.parent.postMessage({ source: "com-arcade", type: "resize", height: Math.ceil(document.documentElement.scrollHeight) }, "*");
+    };
+    const observer = new ResizeObserver(notifyParent);
+    observer.observe(document.documentElement);
+    window.addEventListener("resize", notifyParent);
+    notifyParent();
+    return () => { observer.disconnect(); window.removeEventListener("resize", notifyParent); };
+  }, []);
+
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await (mainRef.current ?? document.documentElement).requestFullscreen();
+    } catch {
+      setMessage("Le plein écran doit être autorisé par l’intranet.");
+    }
+  }
+
   async function start(event?: FormEvent) {
     event?.preventDefault();
     if (!ready || runningRef.current) return;
@@ -201,18 +230,20 @@ export function Arcade() {
   }
 
   return (
-    <main className="arcade-bg min-h-screen px-4 py-7 sm:px-10 sm:py-10"><div className="mx-auto max-w-6xl">
-      <header className="mb-7 flex flex-col justify-between gap-3 border-b-4 border-[#14213d] pb-5 sm:flex-row sm:items-end"><div><p className="mb-1 text-sm font-bold tracking-[.22em] text-[#ff6b35]">SERVICE COM · INTRANET</p><h1 className="text-4xl font-black tracking-tight sm:text-6xl">COM ARCADE</h1></div><p className="max-w-sm text-sm font-bold">Un jeu rétro chaque semaine. Une partie courte. Votre meilleur score au classement.</p></header>
-      <section className="grid gap-7 lg:grid-cols-[1.35fr_.65fr]">
+    <main ref={mainRef} className="arcade-bg arcade-page min-h-screen px-4 py-7 sm:px-10 sm:py-10"><div className="mx-auto max-w-6xl">
+      <header className="arcade-header mb-7 flex flex-col justify-between gap-3 border-b-4 border-[#14213d] pb-5 sm:flex-row sm:items-end"><div><p className="arcade-kicker mb-1 text-sm font-bold tracking-[.22em] text-[#ff6b35]">SERVICE COM · INTRANET</p><h1 className="arcade-title text-4xl font-black tracking-tight sm:text-6xl">COM ARCADE</h1></div><div className="flex items-center gap-3"><p className="arcade-header-copy max-w-sm text-sm font-bold">Un jeu rétro chaque semaine. Une partie courte. Votre meilleur score au classement.</p><button type="button" onClick={() => void toggleFullscreen()} className="shrink-0 border-2 border-[#14213d] bg-white px-3 py-2 text-sm font-black" aria-label={isFullscreen ? "Quitter le plein écran" : "Passer en plein écran"}>{isFullscreen ? "RÉDUIRE" : "PLEIN ÉCRAN"}</button></div></header>
+      <section className="arcade-layout grid gap-7 lg:grid-cols-[1.35fr_.65fr]">
         <div className="border-4 border-[#14213d] bg-[#14213d] p-3 shadow-[8px_8px_0_#ff6b35]">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-white"><strong>{game?.title ?? "JEU EN CHARGEMENT"}</strong><span className="font-mono">{score} PTS · {seconds.toString().padStart(2, "0")} S</span></div>
-          <div ref={rootRef} className="aspect-video min-h-[260px] overflow-hidden bg-[#20134b]" aria-label="Zone du jeu" />
-          <form onSubmit={start} className="mt-3 flex flex-col gap-3 sm:flex-row">
+          <div className="relative">
+          <div ref={rootRef} className="arcade-game-stage aspect-video min-h-[260px] overflow-hidden bg-[#20134b]" aria-label="Zone du jeu" />
+          {!running && <form onSubmit={start} className="absolute inset-x-3 bottom-3 flex flex-col gap-3 sm:flex-row">
             {!hasSession && <input aria-label="Prénom ou pseudo local" maxLength={40} value={name} onChange={(event) => setName(event.target.value)} className="min-w-0 flex-1 border-2 border-white bg-white px-3 py-2 text-[#14213d]" placeholder="Prénom / pseudo (mode local)" />}
             <button disabled={!ready || running} className="flex-1 bg-[#ffd166] px-4 py-3 font-black text-[#14213d] disabled:opacity-40">{running ? "PARTIE EN COURS…" : "JOUER"}</button>
-          </form>
+          </form>}
+          </div>
         </div>
-        <aside className="border-4 border-[#14213d] bg-white p-5 shadow-[8px_8px_0_#14213d]">
+        <aside className="arcade-leaderboard border-4 border-[#14213d] bg-white p-5 shadow-[8px_8px_0_#14213d]">
           <h2 className="mb-1 text-2xl font-black">CLASSEMENT</h2>{playerName && <p className="mb-4 text-sm font-bold text-[#ff6b35]">Session : {playerName}</p>}
           <ol className="space-y-2">{scores.length ? scores.map((item, index) => <li key={`${item.participant_name}-${index}`} className="flex justify-between border-b-2 border-[#f1e5c7] pb-2 font-bold"><span><b className="mr-3 text-[#ff6b35]">{index + 1}</b>{item.participant_name}</span><span>{item.score}</span></li>) : <li className="text-sm">Aucun score pour ce tenant. À vous de jouer.</li>}</ol>
           <p role="status" aria-live="polite" className="mt-6 border-t-2 border-[#14213d] pt-4 text-sm font-bold text-[#ff6b35]">{message}</p>
