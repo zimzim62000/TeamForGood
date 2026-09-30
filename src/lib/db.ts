@@ -333,6 +333,93 @@ export function leaderboard(gameId: number, tenantId: string) {
   `).all(gameId, tenantId) as Score[];
 }
 
+export type AdminParticipantCount = { tenant_id: string; participant_count: number };
+export type AdminGameLeaderboardEntry = {
+  game_id: number;
+  game_slug: string;
+  game_title: string;
+  tenant_id: string;
+  rank: number;
+  participant_name: string;
+  score: number;
+};
+export type AdminGlobalLeaderboardEntry = {
+  tenant_id: string;
+  rank: number;
+  participant_name: string;
+  normalized_score: number;
+  raw_score: number;
+  games_played: number;
+};
+
+export function adminOverview() {
+  const participantCounts = db.prepare(`
+    SELECT tenant_id, COUNT(*) AS participant_count
+    FROM users
+    GROUP BY tenant_id
+    ORDER BY tenant_id
+  `).all() as AdminParticipantCount[];
+
+  const gameLeaderboards = db.prepare(`
+    WITH best_per_player AS (
+      SELECT scores.game_id, games.slug AS game_slug, games.title AS game_title,
+        scores.tenant_id, scores.participant_id, scores.participant_name, scores.score, scores.played_at,
+        ROW_NUMBER() OVER (
+          PARTITION BY scores.game_id, scores.tenant_id, scores.participant_id
+          ORDER BY scores.score DESC, scores.played_at ASC, scores.id ASC
+        ) AS best_position
+      FROM scores
+      JOIN games ON games.id = scores.game_id
+    ), ranked AS (
+      SELECT game_id, game_slug, game_title, tenant_id, participant_name, score,
+        ROW_NUMBER() OVER (
+          PARTITION BY game_id, tenant_id
+          ORDER BY score DESC, played_at ASC, participant_name ASC
+        ) AS rank
+      FROM best_per_player
+      WHERE best_position = 1
+    )
+    SELECT game_id, game_slug, game_title, tenant_id, rank, participant_name, score
+    FROM ranked
+    WHERE rank <= 10
+    ORDER BY tenant_id, game_title, rank
+  `).all() as AdminGameLeaderboardEntry[];
+
+  const globalLeaderboards = db.prepare(`
+    WITH best_per_player AS (
+      SELECT scores.game_id, scores.tenant_id, scores.participant_id, scores.participant_name,
+        scores.score, scores.played_at, games.max_score,
+        ROW_NUMBER() OVER (
+          PARTITION BY scores.game_id, scores.tenant_id, scores.participant_id
+          ORDER BY scores.score DESC, scores.played_at ASC, scores.id ASC
+        ) AS best_position
+      FROM scores
+      JOIN games ON games.id = scores.game_id
+    ), totals AS (
+      SELECT tenant_id, participant_id, participant_name,
+        ROUND(SUM(score * 1000.0 / max_score)) AS normalized_score,
+        SUM(score) AS raw_score,
+        COUNT(*) AS games_played
+      FROM best_per_player
+      WHERE best_position = 1
+      GROUP BY tenant_id, participant_id, participant_name
+    ), ranked AS (
+      SELECT tenant_id, participant_name, normalized_score, raw_score, games_played,
+        ROW_NUMBER() OVER (
+          PARTITION BY tenant_id
+          ORDER BY normalized_score DESC, games_played DESC, participant_name ASC
+        ) AS rank
+      FROM totals
+    )
+    SELECT tenant_id, rank, participant_name, normalized_score, raw_score, games_played
+    FROM ranked
+    WHERE rank <= 10
+    ORDER BY tenant_id, rank
+  `).all() as AdminGlobalLeaderboardEntry[];
+
+  return { participantCounts, gameLeaderboards, globalLeaderboards };
+}
+
 export function upsertUser(tenantId: string, externalId: string, firstName: string, lastInitial: string) {
   db.prepare(`
     INSERT INTO users (tenant_id, external_id, first_name, last_initial)
