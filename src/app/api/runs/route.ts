@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     try {
       const participant = resolveParticipant(request, body.name);
       const game = getActiveGame();
-      if (!game) return Response.json({ error: "Aucun jeu actif." }, { status: 404 });
+      if (!game) return Response.json({ error: "Aucun jeu configuré." }, { status: 503 });
       return Response.json({ run: createRun(game, participant), participant: { name: participant.name } });
     } catch (error) {
       if (error instanceof AuthError) {

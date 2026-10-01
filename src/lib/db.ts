@@ -208,11 +208,19 @@ export function getActiveGame() {
         ORDER BY starts_at DESC, id DESC
         LIMIT 1
       `).get(now, now) as { id: number } | undefined;
+  // Le module de démonstration est le filet de sécurité local : une rotation
+  // terminée ne doit pas rendre l'arcade inutilisable entre deux livraisons.
+  // Il s'agit d'une entrée historique existante, jamais d'un nouvel identifiant
+  // de jeu créé à chaque requête.
+  const fallback = !scheduled
+    ? db.prepare("SELECT id FROM games WHERE slug = 'neon-dodger' LIMIT 1").get() as { id: number } | undefined
+    : undefined;
+  const selected = scheduled ?? fallback;
   const current = db.prepare("SELECT id FROM games WHERE is_active = 1 LIMIT 1").get() as { id: number } | undefined;
-  if (current?.id !== scheduled?.id) {
+  if (current?.id !== selected?.id) {
     const activate = db.transaction(() => {
       db.prepare("UPDATE games SET is_active = 0 WHERE is_active = 1").run();
-      if (scheduled) db.prepare("UPDATE games SET is_active = 1 WHERE id = ?").run(scheduled.id);
+      if (selected) db.prepare("UPDATE games SET is_active = 1 WHERE id = ?").run(selected.id);
     });
     activate();
   }
