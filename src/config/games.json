@@ -16,5 +16,14 @@
     "moduleUrl": "/games/palette-rush-2026-w41/game.js",
     "durationSeconds": 30,
     "maxScore": 1000
+  },
+  {
+    "slug": "palette-dash-2026-w41",
+    "title": "Palette Dash",
+    "startsAt": "2026-10-06T08:00:00+02:00",
+    "endsAt": "2026-10-06T20:00:00+02:00",
+    "moduleUrl": "/games/palette-dash-2026-w41/game.js",
+    "durationSeconds": 45,
+    "maxScore": 1200
   }
 ]
